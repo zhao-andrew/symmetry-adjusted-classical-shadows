@@ -1,10 +1,5 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""
-Created on Wed Jun 24 16:16:01 2020
-
-@author: andrew
-"""
 
 import numpy as np
 import itertools
@@ -229,7 +224,7 @@ def tally_majorana_matches(ops_dict, Q, k_max=None):
 def construct_random_measurements_FGU(ops_dict, n, k_max=None, r=10):
     """
     Constructs a random cover of ops_dict using the hyperparameter r. That is,
-    it generates random 2n permutations until all operators in obs_dict have
+    it generates random 2n-permutations until all operators in ops_dict have
     been accounted for at least r times.
 
     Parameters
@@ -251,7 +246,7 @@ def construct_random_measurements_FGU(ops_dict, n, k_max=None, r=10):
     -------
     random_measurements : dict
         The resulting cover of Majorana operators. The dictionary pattern is
-        {permutation : [list of (measured_op_indices, sign)]}.
+        {permutation : [(measured_op_indices, sign)]}.
 
     """
     
@@ -275,11 +270,11 @@ def construct_random_measurements_FGU(ops_dict, n, k_max=None, r=10):
 n = 6
 k = 2
 
-majorana_counts = {}
+majorana_k_rdm_counts = {}
 
 for j in range(1, k+1):
     for mu in itertools.combinations(range(2*n), 2*j):
-        majorana_counts[mu] = 0
+        majorana_k_rdm_counts[mu] = 0
 
-rand_meas = construct_random_measurements_FGU(majorana_counts, n, k_max=k,
-                                              r=10)
+rand_meas = construct_random_measurements_FGU(majorana_k_rdm_counts, n,
+                                              k_max=k, r=10)
