@@ -194,10 +194,11 @@ def tally_majorana_matches(ops_dict, Q, k_max=None):
     Returns
     -------
     list
-        List of operators measured, as a tuple in the form (indices, sign),
-        where sign is the associated sign accrued by the unitary action. That
-        is,
-        U(Q) (Majorana) U(Q)^\dagger = sign * (permuted Majorana)
+        List of operators measured, as a tuple in the form (Majorana, diagonal
+        Majorana, sign), where sign is the associated sign accrued by the
+        unitary action. That is,
+        
+        U(Q) (Majorana) U(Q)^\dagger = sign * (diagonal Majorana).
 
     """
     
@@ -217,7 +218,8 @@ def tally_majorana_matches(ops_dict, Q, k_max=None):
         
             if permuted_diag_index in ops_dict:
                 ops_dict[permuted_diag_index] += 1
-                measured_ops.append((permuted_diag_index, sign))
+                measured_ops.append((permuted_diag_index, tuple(diag_index),
+                                     sign))
     
     return measured_ops
 
