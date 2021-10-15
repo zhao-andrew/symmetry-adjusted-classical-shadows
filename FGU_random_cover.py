@@ -270,7 +270,7 @@ def construct_random_measurements_FGU(ops_dict, n, k_max=None, r=10):
 
 #%% Example
 
-if __name__ = '__main__':
+if __name__ == '__main__':
 
     n = 6
     k = 2
