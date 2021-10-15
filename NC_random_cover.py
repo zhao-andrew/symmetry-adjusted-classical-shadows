@@ -122,12 +122,10 @@ def majorana_to_pauli_dict(majorana_list, qubit_mapping='jw'):
     """
     Generates a dictionary from Majorana operator indices (ordered tuples) to
     its Pauli string representation under a given fermion-to-qubit mapping.
-    Does not keep track of phases in front of the operators, since they are
-    always related by
+    Does not keep track of phases in front of the operators, since we always
+    assume the convention
     
-    (-i)^k * Majorana = (+1) * Pauli,
-    
-    where the Majorana operator is of degree 2k.
+    Majorana operator = (-i)^k * \gamma_1 ... \gamma_{2k}.
 
     Parameters
     ----------
@@ -212,17 +210,19 @@ def construct_random_measurements_NC(ops_dict, map_dict, n, r=10):
 
 #%% Example
 
-n = 6
-k = 2
+if __name__ == '__main__':
 
-majorana_k_rdm_counts = {}
+    n = 6
+    k = 2
 
-for j in range(1, k+1):
-    for mu in itertools.combinations(range(2*n), 2*j):
-        majorana_k_rdm_counts[mu] = 0
+    majorana_k_rdm_counts = {}
 
-jw_mapping = majorana_to_pauli_dict(majorana_k_rdm_counts.keys(),
-                                    qubit_mapping='jw')
+    for j in range(1, k+1):
+        for mu in itertools.combinations(range(2*n), 2*j):
+            majorana_k_rdm_counts[mu] = 0
 
-rand_meas = construct_random_measurements_NC(majorana_k_rdm_counts, jw_mapping,
-                                             n, r=10)
+    jw_mapping = majorana_to_pauli_dict(majorana_k_rdm_counts.keys(),
+                                        qubit_mapping='jw')
+
+    rand_meas = construct_random_measurements_NC(majorana_k_rdm_counts, jw_mapping,
+                                                 n, r=50)
