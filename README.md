@@ -12,3 +12,5 @@ This implementation requires [NumPy](https://numpy.org/), [OpenFermion](https://
 `construct_random_measurements_FGU`/`construct_random_measurements_NC` will return a dictionary containing the measurement bases one needs to perform in order to estimate all Majorana operators desired. Typically all 2k-degree Majorana operators are desired to reconstruct the k-RDM; an example of how to generate such operators is given at the bottom of `FGU_random_cover.py`/`NC_random_cover.py`.
 
 The measurement bases are encoded as 2n-length permutations (numpy arrays) for FGU, and n-length permutations + Pauli string for NC. Here, n is the number of fermion modes being simulated. To convert the FGU permutations to circuits which one will implement in hardware, compilation routines are provided in `gaussian_circuit_givens_decomposition.py`. The NC circuits can be compiled using `optimal_givens_decomposition` from OpenFermion, and the following Pauli string is the Pauli measurement to implement using standard Hadamard and phase gates.
+
+If you have any questions, please do not hesitate to reach out.
