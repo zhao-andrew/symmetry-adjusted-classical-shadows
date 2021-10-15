@@ -137,14 +137,15 @@ def permute_majorana(indices, Q):
     Parameters
     ----------
     indices : iterable of int
-        Input (Majorana operator) indices.
+        Input (Majorana operator) indices; length-2k indices correspond to a
+        k-RDM operator.
     Q : iterable of int
-        Lenth 2n permutation.
+        Length-2n permutation.
 
     Returns
     -------
     tuple
-        The permuted indices, sorted.
+        The image of the permutation, sorted.
     sign : int
         The sign required to sort the permuted indices.
 
@@ -226,8 +227,8 @@ def tally_majorana_matches(ops_dict, Q, k_max=None):
 def construct_random_measurements_FGU(ops_dict, n, k_max=None, r=10):
     """
     Constructs a random cover of ops_dict using the hyperparameter r. That is,
-    it generates random 2n-permutations until all operators in ops_dict have
-    been accounted for at least r times.
+    it generates random 2n-permutations until all Majorana operators in
+    ops_dict have been accounted for at least r times.
 
     Parameters
     ----------
@@ -269,14 +270,16 @@ def construct_random_measurements_FGU(ops_dict, n, k_max=None, r=10):
 
 #%% Example
 
-n = 6
-k = 2
+if __name__ = '__main__':
 
-majorana_k_rdm_counts = {}
+    n = 6
+    k = 2
 
-for j in range(1, k+1):
-    for mu in itertools.combinations(range(2*n), 2*j):
-        majorana_k_rdm_counts[mu] = 0
+    majorana_k_rdm_counts = {}
 
-rand_meas = construct_random_measurements_FGU(majorana_k_rdm_counts, n,
-                                              k_max=k, r=10)
+    for j in range(1, k+1):
+        for mu in itertools.combinations(range(2*n), 2*j):
+            majorana_k_rdm_counts[mu] = 0
+
+    rand_meas = construct_random_measurements_FGU(majorana_k_rdm_counts, n,
+                                                  k_max=k, r=50
