@@ -27,7 +27,7 @@ def rand_sym_mat(N):
     
     p = np.random.permutation(np.arange(N))
     
-    return Q[:,p]
+    return Q[:, p]
 
 def rand_alt_mat(N):
     """
@@ -41,7 +41,7 @@ def rand_alt_mat(N):
         p = np.random.permutation(np.arange(N))
         s = perm_parity(p)
     
-    return Q[:,p]
+    return Q[:, p]
 
 def rand_sym_perm(N):
     """
@@ -117,7 +117,7 @@ def tally_nonzero_subdets(obs_dict, diag_terms, Q):
             submat_sum = 0
             for p in mu:
                 for q in nu:
-                    if Q[p,q] == 1:
+                    if Q[p, q] == 1:
                         submat_sum += 1
                         break
             
@@ -212,7 +212,7 @@ def tally_majorana_matches(ops_dict, Q, k_max=None):
     
     for j in range(1, k_max+1):
         for P in itertools.combinations(range(n), j):
-            diag_index = [2*p+i for p in P for i in range(2)]
+            diag_index = [2*p + i for p in P for i in range(2)]
             
             Q_inv = invert_permutation(Q)
             permuted_diag_index, sign = permute_majorana(diag_index, Q_inv)
@@ -277,7 +277,7 @@ if __name__ == '__main__':
 
     majorana_k_rdm_counts = {}
 
-    for j in range(1, k+1):
+    for j in range(1, k + 1):
         for mu in itertools.combinations(range(2*n), 2*j):
             majorana_k_rdm_counts[mu] = 0
 
