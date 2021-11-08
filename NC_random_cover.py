@@ -16,7 +16,7 @@ def rand_pauli_string(n):
     Generates a random full-weight (n-qubit) Pauli string.
     """
     
-    bases = ['X','Y','Z']
+    bases = ['X', 'Y', 'Z']
     
     P = []
     
@@ -52,9 +52,9 @@ def permute_majorana_NC(indices, u):
     l = []
     for i in indices:
         if i % 2:
-            l.append(int(2*u[(i-1)//2] + 1))
+            l.append(int(2*u[(i - 1) // 2] + 1))
         else:
-            l.append(int(2*u[i//2]))
+            l.append(int(2*u[i // 2]))
     
     sign = (-1)**perm_parity(l)
     l.sort()
@@ -217,7 +217,7 @@ if __name__ == '__main__':
 
     majorana_k_rdm_counts = {}
 
-    for j in range(1, k+1):
+    for j in range(1, k + 1):
         for mu in itertools.combinations(range(2*n), 2*j):
             majorana_k_rdm_counts[mu] = 0
 
