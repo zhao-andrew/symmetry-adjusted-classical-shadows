@@ -208,21 +208,35 @@ def construct_random_measurements_NC(ops_dict, map_dict, n, r=10):
     
     return random_measurements
 
-#%% Example
+#%% Example usage
 
 if __name__ == '__main__':
-
-    n = 6
+    
+    """Set system size and order of k-RDM desired (usually k = 2 is sufficient,
+    e.g., for local electron-electron interactions)."""
+    n_orbitals = 6
     k = 2
 
+    """Construct a k-RDM in the Majorana representation as a dictionary of form
+    {majorana_indices : expectation_value}. Here, we insert all possible Majorana
+    operators if we are interested in the entire k-RDM; however, the dictionary
+    can be constructed differently if only a subset of observables are desired."""
     majorana_k_rdm_counts = {}
-
     for j in range(1, k + 1):
-        for mu in itertools.combinations(range(2*n), 2*j):
+        for mu in itertools.combinations(range(2 * n_orbitals), 2 * j):
             majorana_k_rdm_counts[mu] = 0
 
+    """Since this approach depends on the fermion-to-qubit mapping, we must specify
+    one. Here we are using the Jordan-Wigner encoding. Specifically, jw_mapping
+    is a dictionary that associates each Majorana operator of interest to its Pauli
+    operators. We precompute and store this in memory in order to avoid wasting time
+    by constantly recomputing the same mapping over and over."""
     jw_mapping = majorana_to_pauli_dict(majorana_k_rdm_counts.keys(),
                                         qubit_mapping='jw')
 
+    """Generate a random cover of FGU measurement settings such that all Majorana
+    operators are covered at least r = 50 times. This means that if one wishes to
+    estimate each operator to statistical accuracy corresponding to S samples, each
+    measurement setting (circuit) needs to be repeated only S/r times."""
     rand_meas = construct_random_measurements_NC(majorana_k_rdm_counts, jw_mapping,
-                                                 n, r=50)
+                                                 n_orbitals, r=50)
