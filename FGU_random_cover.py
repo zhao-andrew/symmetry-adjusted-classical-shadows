@@ -206,18 +206,29 @@ def construct_random_measurements_FGU(ops_dict, n, k_max=None, r=10):
     
     return random_measurements
 
-#%% Example
+#%% Example usage
 
 if __name__ == '__main__':
-
-    n = 6
+    
+    """Set system size and order of k-RDM desired (usually k = 2 is sufficient,
+    e.g., for local electron-electron interactions)."""
+    n_orbitals = 6
     k = 2
-
+    
+    """Construct a k-RDM in the Majorana representation as a dictionary of form
+    {majorana_indices : expectation_value}. Here, we insert all possible Majorana
+    operators if we are interested in the entire k-RDM; however, the dictionary
+    can be constructed differently if only a subset of observables are desired."""
     majorana_k_rdm_counts = {}
-
     for j in range(1, k + 1):
-        for mu in itertools.combinations(range(2*n), 2*j):
+        for mu in itertools.combinations(range(2 * n_orbitals), 2 * j):
             majorana_k_rdm_counts[mu] = 0
-
-    rand_meas = construct_random_measurements_FGU(majorana_k_rdm_counts, n,
+    
+    """Generate a random cover of FGU measurement settings such that all Majorana
+    operators are covered at least r = 50 times. This means that if one wishes to
+    estimate each operator to statistical accuracy corresponding to S samples, each
+    measurement setting (circuit) needs to be repeated only S/r times. Note that
+    specifying the k_max parameter is merely for a minor computational speedup in
+    the case that we are targeting the entire k-RDM, and is not necessary."""
+    rand_meas = construct_random_measurements_FGU(majorana_k_rdm_counts, n_orbitals,
                                                   k_max=k, r=50)
