@@ -1,10 +1,13 @@
 # Classical shadows for fermions (and qubits!)
 
+> [!WARNING]
+> This project is currently being rehauled, and as such may not fully work as intended. See `legacy` if the old codes are still needed.
+
 Open-source codes for performing classical shadows, particularly for quantum simulations of fermions and qubits. Based primarily on the following papers:
 
-* https://arxiv.org/abs/2002.08953 : Introduces the concept of classical shadows and demonstrates the application to local qubit (Pauli) measurements (random single-qubit Clifford gates)
-* https://arxiv.org/abs/2010.16094 : Constructs classical shadows protocols for local fermion measurements (random fermionic Gaussian unitary (matchgate) & Clifford circuits)
-* [Coming soon] : Develops an error-mitigation strategy using symmetries to introduce robustness to noise in the quantum computer. Also introduces a number of modifications and extensions of the above protocols, including an optimal circuit design for fermionic Gaussian unitaries
+* https://arxiv.org/abs/2002.08953 - Introduces the concept of classical shadows and demonstrates the application to local qubit (Pauli) measurements (random single-qubit Clifford gates)
+* https://arxiv.org/abs/2010.16094 - Constructs classical shadows protocols for local fermion measurements (random fermionic Gaussian unitary (matchgate) & Clifford circuits)
+* [Coming soon] - Develops an error-mitigation strategy using symmetries to introduce robustness to noise in the quantum computer. Also introduces a number of modifications and extensions of the above protocols, including an optimal circuit design for fermionic Gaussian unitaries
 
 The base implementation in Python requires [OpenFermion](https://quantumai.google/openfermion) and [Cirq](https://quantumai.google/cirq). The numerical simulations additionally require [qsimcirq](https://github.com/quantumlib/qsim), [ReCirq](https://github.com/quantumlib/ReCirq), and the Julia package [ITensor](https://github.com/ITensor/ITensors.jl).
 
