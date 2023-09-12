@@ -1,16 +1,13 @@
-# Fermionic partial tomography via classical shadows
+# Classical shadows for fermions (and qubits!)
 
-Open source implementation of https://arxiv.org/abs/2010.16094, a technique to measure the fermionic k-body reduced density matrices (k-RDM) of an arbitrary quantum state. We use the framework of classical shadows, which measures in randomly selected bases defined by a distribution of unitaries. The distributions considered in this work are:
+Open-source codes for performing classical shadows, particularly for quantum simulations of fermions and qubits. Based primarily on the following papers:
 
-* Fermionic Gaussian Clifford unitaries (FGU)
-* Number-conserving (NC) subgroup of FGU, followed by Pauli measurements
+* https://arxiv.org/abs/2002.08953 : Introduces the concept of classical shadows and demonstrates the application to local qubit (Pauli) measurements (random single-qubit Clifford gates)
+* https://arxiv.org/abs/2010.16094 : Constructs classical shadows protocols for local fermion measurements (random fermionic Gaussian unitary (matchgate) & Clifford circuits)
+* [Coming soon] : Develops an error-mitigation strategy using symmetries to introduce robustness to noise in the quantum computer. Also introduces a number of modifications and extensions of the above protocols, including an optimal circuit design for fermionic Gaussian unitaries
 
-Generally speaking, shadow tomography via FGU requires less circuit repetitions than via NC (empirically, roughly half as many); however, NC circuits have half the depth of FGU. The best option is therefore highly dependent on context.
+The base implementation in Python requires [OpenFermion](https://quantumai.google/openfermion) and [Cirq](https://quantumai.google/cirq). The numerical simulations additionally require [qsimcirq](https://github.com/quantumlib/qsim), [ReCirq](https://github.com/quantumlib/ReCirq), and the Julia package [ITensor](https://github.com/ITensor/ITensors.jl).
 
-This implementation requires [NumPy](https://numpy.org/), [OpenFermion](https://quantumai.google/openfermion), and [Cirq](https://quantumai.google/cirq).
+The files are organized as follows. For either `fermion_shadows` or `pauli_shadows`, codes in the `prediction` directory provide the routines to postprocess the quantum measurement data (description of random unitary and bit string) into numerical estimates of desired observables (using either a Pauli or Majorana operator decomposition). Included are also the robust estimators, using either calibration data obtained to perform [Robust Shadow Estimation](https://arxiv.org/abs/2011.09636) or symmetry information as described in [Coming soon]. Codes in the `simulation` directory provide examples for running the protocol (i.e., numerically simulating the quantum circuits to obtain samples, which are then postprocessed into observable predictions). These examples include the numerical experiments featured in [Coming soon].
 
-`construct_random_measurements_FGU`/`construct_random_measurements_NC` will return a dictionary containing the measurement bases one needs to perform in order to estimate all Majorana operators desired. Typically all 2k-degree Majorana operators are desired to reconstruct the k-RDM; an example of how to generate such operators is given at the bottom of `FGU_random_cover.py`/`NC_random_cover.py`.
-
-The measurement bases are encoded as 2n-length permutations (numpy arrays) for FGU, and n-length permutations + Pauli string for NC. Here, n is the number of fermion modes being simulated. To convert the FGU permutations to circuits which one will implement in hardware, compilation routines are provided in `gaussian_circuit_givens_decomposition.py`. The NC circuits can be compiled using `optimal_givens_decomposition` from OpenFermion, and the following Pauli string is the Pauli measurement to implement using standard Hadamard and phase gates.
-
-If you have any questions, please do not hesitate to reach out.
+Working examples/test codes are provided for each protocol. If you have any questions, please do not hesitate to reach out.
