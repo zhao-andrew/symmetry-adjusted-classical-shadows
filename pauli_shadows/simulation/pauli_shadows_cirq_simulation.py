@@ -28,6 +28,7 @@ W = V.conj().T
 S3 = [I, V, W, H, H @ V, H @ W]
 P1 = [I, X, Y, Z]
 
+
 def identify_pauli_matrix(matrix: np.ndarray) -> str:
     
     if np.isclose(matrix, X).all():

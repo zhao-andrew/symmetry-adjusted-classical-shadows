@@ -1,7 +1,8 @@
-import numpy as np
 from itertools import combinations
 
-from qubit_rdm_tools import QubitRDM
+import sys
+sys.path.append('../pauli_shadows')
+from pauli_shadows.qubit_rdm_tools import QubitRDM, Pauli_Set
 
 
 def mitigate_pauli_expectations_via_magnetization(qubit_rdm: QubitRDM, magnetization) -> QubitRDM:

@@ -2,6 +2,7 @@ import numpy as np
 from scipy.linalg import schur
 from itertools import combinations
 
+
 def fock_cov_matrix(n_modes, occ_modes):
 
     if isinstance(occ_modes, (int, np.integer)):
@@ -16,12 +17,14 @@ def fock_cov_matrix(n_modes, occ_modes):
 
     return M
 
+
 def gaussian_cov_matrix(ortho_matrix, init_occ_modes):
 
     n_modes = ortho_matrix.shape[0] // 2
     M = ortho_matrix.T @ fock_cov_matrix(n_modes, init_occ_modes) @ ortho_matrix
 
     return M
+
 
 def one_body_majorana_expectations(cov_matrix):
 
@@ -32,6 +35,7 @@ def one_body_majorana_expectations(cov_matrix):
         majorana_expectations[(p, q)] = cov_matrix[p, q]
 
     return majorana_expectations
+
 
 def two_body_majorana_expectations(cov_matrix):
 
@@ -46,6 +50,7 @@ def two_body_majorana_expectations(cov_matrix):
         majorana_expectations[S] = wick_expectation
 
     return majorana_expectations
+
 
 def pfaffian(A):
     """
@@ -66,6 +71,7 @@ def pfaffian(A):
 
     return det_Z * pf_T
 
+
 def slater_opdm(unitary, occ_modes):
 
     if isinstance(occ_modes, (int, np.integer)):
@@ -77,6 +83,7 @@ def slater_opdm(unitary, occ_modes):
     opdm = (config_matrix @ config_matrix.conj().T).T
 
     return opdm
+
 
 def slater_tpdm(unitary, occ_modes):
 
@@ -102,6 +109,7 @@ def slater_tpdm(unitary, occ_modes):
         i += 1
 
     return tpdm
+
 
 def sample_gaussian_state(cov_matrix):
 
@@ -130,6 +138,7 @@ def sample_gaussian_state(cov_matrix):
 
     return outcome
 
+
 def bit_list_to_int(b):
 
     x = 0
@@ -140,6 +149,7 @@ def bit_list_to_int(b):
         i += 1
 
     return x
+
 
 def embed_passive_into_active_transformation(unitary_matrix):
 

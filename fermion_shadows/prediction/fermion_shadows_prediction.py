@@ -5,9 +5,33 @@ from scipy.special import binom
 
 
 def majorana_shadow_estimates_full_system(outcomes,
-                                          k: int = 2) -> dict:
+                                          k: int = 2
+                                          ) -> dict:
     """
-    Estimates the expectation values of all Majorana operators up to degree 2k from classical shadows `outcomes`.
+    Estimates the expectation values of all Majorana operators
+    up to degree 2k from classical shadows stored in `outcomes`.
+    Note the sign convention for k-body Majorana operators is
+
+    Gamma_{(p_1, ..., p_{2k})} = (-i)^k \gamma_{p_1} ... \gamma_{p_{2k}}.
+
+    The structure of `outcomes` is a list of tuples, where each
+    tuple is one shadow sample of the form
+
+    (Q, b)
+
+    Q = 2n array representing the permutation matrix
+        -> random matchgate circuit
+    b = n-bit string (measurement of quantum computer)
+
+    Args:
+        outcomes: list of shadow samples
+        k (Optional): Maximum fermionic locality of Majorana
+                operators being estimated. Default is 2.
+
+    Returns:
+        expectations: dict of the form {tuple : float}, where
+                the keys are the Majorana operator indices and
+                values are estimates of those Majorana operators
     """
 
     # Initialize
@@ -57,8 +81,23 @@ def majorana_shadow_estimates_spin_adapted(outcomes,
                                            down_modes: Union[int, Sequence[int]],
                                            k: int = 2) -> dict:
     """
-    Estimates the expectation values of all Majorana operators up to degree 2k from classical shadows `outcomes`,
-    where there is always an even number of indices in each of the up and down spin supports.
+    Estimates the expectation values of all Majorana operators
+    up to degree 2k which are compatible with the spin sectors
+    of up_modes and down_modes. Conventions same as above.
+
+    Args:
+        outcomes: list of shadow samples
+        up_modes: Number of spin-up modes, or indices for the
+                spin-up modes
+        up_modes: Number of spin-down modes, or indices for the
+                spin-down modes
+        k (Optional): Maximum fermionic locality of Majorana
+                operators being estimated. Default is 2.
+
+    Returns:
+        expectations: dict of the form {tuple : float}, where
+                the keys are the Majorana operator indices and
+                values are estimates of those Majorana operators.
     """
 
     # Initialize

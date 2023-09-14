@@ -5,7 +5,7 @@ import cirq
 import cirq_google
 import qsimcirq
 
-from optimal_gaussian_circuit import optimal_gaussian_circuit, optimal_gaussian_circuit_spin_block_diag
+from optimal_matchgate_circuit import optimal_gaussian_circuit, optimal_gaussian_circuit_spin_block_diag
 
 
 def sample_shadows_full_system(qubits,

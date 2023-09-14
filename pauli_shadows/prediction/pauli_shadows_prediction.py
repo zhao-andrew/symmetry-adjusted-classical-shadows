@@ -1,5 +1,8 @@
 import numpy as np
-from qubit_rdm_tools import QubitRDM, Pauli_Set
+
+import sys
+sys.path.append('../pauli_shadows')
+from pauli_shadows.qubit_rdm_tools import QubitRDM, Pauli_Set
 
 
 def pauli_shadow_estimates(outcomes, k: int = 2, subsystems=None) -> QubitRDM:
