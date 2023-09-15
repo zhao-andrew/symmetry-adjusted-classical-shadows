@@ -53,20 +53,22 @@ def optimal_gaussian_circuit(qubits: Sequence[cirq.Qid],
     left_rotations, right_rotations, signs = majorana_block_decomposition(orthogonal_matrix)
 
     """Decompose each 4 x 4 transformation into a circuit
-    of Givens rotations and a layer of Pauli gates"""
-    for op in left_rotations[:-1]:
+    of Givens rotations and a layer of Pauli gates by
+    bootstrapping from the standard circuit design on
+    only two qubits at a time"""
+    for op in right_rotations:
         p, q, orth_mat = cast(Tuple[int, int, np.ndarray], op)
         yield standard_majorana_givens_circuit(qubits, orth_mat, p)
-
-    """The extra Givens rotation from left_rotations"""
-    p, q, theta = cast(Tuple[int, int, float], left_rotations[-1])
-    yield cirq.Z(qubits[p // 2])**(theta / np.pi)
 
     """Implement the diagonal matrix of signs"""
     yield majorana_sign_gates(qubits, signs)
 
-    """Do the same with the right_rotations"""
-    for op in reversed(right_rotations):
+    """The extra Givens rotation from left_rotations"""
+    p, q, theta = cast(Tuple[int, int, float], left_rotations[0])
+    yield cirq.Z(qubits[p // 2])**(theta / np.pi)
+
+    """Perform the left rotations"""
+    for op in left_rotations[1:]:
         p, q, orth_mat = cast(Tuple[int, int, np.ndarray], op)
         yield standard_majorana_givens_circuit(qubits, orth_mat, p)
 
@@ -128,7 +130,7 @@ def majorana_block_decomposition(orthogonal_matrix: np.ndarray
     """
     Perform the decomposition of an orthogonal matrix
 
-    Q = B_l ... B_k D G B_j ... B_i,
+    Q = B_{R + L} ... B_{R + 1} G D B_R ... B_1,
 
     where each B_i is a 4 x 4 orthogonal transformation, G is a
     2 x 2 Givens rotation, and D is a diagonal matrix of {+1, -1} signs.
@@ -196,11 +198,16 @@ def majorana_block_decomposition(orthogonal_matrix: np.ndarray
     else:
         i = 0
     A = current_matrix[i:i + 2, i:i + 2]
-    theta = np.arctan2(-A[1, 0], A[0, 0])
+    theta = np.arctan2(A[1, 0], A[0, 0])
     gmat = real_givens_matrix(theta)
     givens_rotate(current_matrix, gmat.T, i, i + 1, which='row')
 
     left_rotations.append((i, i + 1, theta))
+
+    """Reverse the order of left_rotations to get the sequence 
+    in the correct order (note that right-acting rotations are
+    already in proper order)"""
+    left_rotations.reverse()
 
     return left_rotations, right_rotations, np.diag(current_matrix)
 
@@ -293,25 +300,25 @@ def real_givens_matrix(theta: float
     """
     Constructs an SO(2) matrix
 
-    [c, s]
-    [-s, c]
+    [c, -s]
+    [s, c]
 
     where c = cos(theta), s = sin(theta). Note that this rotates
-    clockwise by theta in the (i, j) axes, following the convention
+    counter-clockwise by theta in the (i, j) axes, following the convention
     that the corresponding Pauli rotation of an observable A is
 
-    exp(-i (theta / 2) P) A exp(i (theta / 2) P)
+    exp(i (theta / 2) P) A exp(-i (theta / 2) P)
 
     Args:
-        theta: Rotation angle (positive = clockwise)
+        theta: Rotation angle (positive = counter-clockwise)
 
     Returns:
         gmat: Givens rotation matrix
     """
     c = np.cos(theta)
     s = np.sin(theta)
-    gmat = np.array([[c, s],
-                     [-s, c]])
+    gmat = np.array([[c, -s],
+                     [s, c]])
 
     return gmat
 
@@ -321,7 +328,7 @@ def standard_givens_decomposition(orthogonal_matrix: np.ndarray
     """
     Perform the decomposition of an orthogonal matrix
 
-    Q = D G_L ... G_1
+    Q = G_1 ... G_L D
 
     where G_i are real Givens rotations and D is a diagonal
     matrix of signs +1, -1. This is essentially the design of
@@ -342,18 +349,21 @@ def standard_givens_decomposition(orthogonal_matrix: np.ndarray
     rotations = []
     for j in range(N - 1):
         for i in range(N - 1, j, -1):
-            theta = np.arctan2(-current_matrix[i, j], current_matrix[i - 1, j])
+            theta = np.arctan2(current_matrix[i, j], current_matrix[i - 1, j])
             gmat = real_givens_matrix(theta)
             givens_rotate(current_matrix, gmat.T, i - 1, i, which='row')
 
             rotations.append((i - 1, i, theta))
+    """Reverse the sequence to get the correct
+    order for left-acting Givens rotations"""
+    rotations.reverse()
 
     return rotations, np.diag(current_matrix)
 
 
 def standard_majorana_givens_circuit(qubits: Sequence[cirq.Qid],
                                      orthogonal_matrix: np.ndarray,
-                                     index_offset: int=0
+                                     index_offset: int = 0
                                      ) -> Iterable[cirq.Operation]:
     """
     Constructs a Cirq circuit which implements the fermionic Gaussian
@@ -364,19 +374,22 @@ def standard_majorana_givens_circuit(qubits: Sequence[cirq.Qid],
         qubits: Sequence of n qubits to apply the operations over. The qubits
                 should be ordered in linear physical order.
         orthogonal_matrix: 2n x 2n orthogonal matrix defining the Gaussian transformation
+        index_offset (Optional): Offsets all qubit indices by some integer. Used for
+                bootstrapping 4 x 4 blocks acting on different pairs of qubits.
+                Default is 0.
 
     Returns:
         Sequence of Cirq gate operations
     """
     rotations, signs = standard_givens_decomposition(orthogonal_matrix)
 
+    full_sign_diag = np.ones(2 * len(qubits))
+    full_sign_diag[index_offset:index_offset + len(signs)] = signs
+    yield majorana_sign_gates(qubits, full_sign_diag)
+
     for op in rotations:
         r, s, theta = cast(Tuple[int, int, float], op)
         yield majorana_rotation_gate(qubits, r + index_offset, s + index_offset, theta)
-
-    full_sign_diag = np.ones(2 * len(qubits))
-    full_sign_diag[index_offset:index_offset + 4] = signs
-    yield majorana_sign_gates(qubits, full_sign_diag)
 
 
 def majorana_rotation_gate(qubits: Sequence[cirq.Qid],
@@ -437,7 +450,7 @@ def majorana_rotation_gate(qubits: Sequence[cirq.Qid],
 
 
 def majorana_sign_gates(qubits: Sequence[cirq.Qid],
-                        signs: Iterable[int, float]
+                        signs: Iterable
                         ) -> Iterable[cirq.Operation]:
     """
     Implements the matchgate/Gaussian transformation by a diagonal
@@ -497,12 +510,18 @@ def embed_unitary_into_orthogonal_matrix(unitary: np.ndarray
     where `optimal_givens_decomposition` is contained in the OpenFermion
     library (https://github.com/quantumlib/OpenFermion). Specifically,
 
-    U -> Q = [R_{ij}]_{i,j = 0}^{n - 1},
+    u -> Q = [R_{ij}]_{i,j = 0}^{n - 1},
 
-    R_{ij} = [Re, Im]
-             [-Im, Re],
+    R_{ij} = [Re, -Im]
+             [Im, Re],
 
-    Re = U[i, j].real, Im = U[i, j].imag
+    Re = u[i, j].real, Im = u[i, j].imag.
+
+    Equivalently, the Gaussian circuit U_Q satisfies
+
+    U_Q^\dagger a_i U_Q = \sum_{j = 0}^{n - 1} u[i, j] a_j
+
+    where a_i are the annihilation operators.
 
     Args:
         unitary: n x n unitary matrix
@@ -518,23 +537,23 @@ def embed_unitary_into_orthogonal_matrix(unitary: np.ndarray
         real_part = unitary[p, p].real
         imag_part = unitary[p, p].imag
         orthogonal_matrix[2 * p:2 * p + 2, 2 * p:2 * p + 2] = np.array(
-            [[real_part, imag_part],
-             [-imag_part, real_part]]
+            [[real_part, -imag_part],
+             [imag_part, real_part]]
         )
 
     for p, q in combinations(range(n_orbitals), 2):
-        real_part = unitary[q, p].real
-        imag_part = unitary[q, p].imag
-        orthogonal_matrix[2 * p:2 * p + 2, 2 * q:2 * q + 2] = np.array(
-            [[real_part, imag_part],
-             [-imag_part, real_part]]
-        )
-
         real_part = unitary[p, q].real
         imag_part = unitary[p, q].imag
+        orthogonal_matrix[2 * p:2 * p + 2, 2 * q:2 * q + 2] = np.array(
+            [[real_part, -imag_part],
+             [imag_part, real_part]]
+        )
+
+        real_part = unitary[q, p].real
+        imag_part = unitary[q, p].imag
         orthogonal_matrix[2 * q:2 * q + 2, 2 * p:2 * p + 2] = np.array(
-            [[real_part, imag_part],
-             [-imag_part, real_part]]
+            [[real_part, -imag_part],
+             [imag_part, real_part]]
         )
 
     return orthogonal_matrix
