@@ -1,9 +1,17 @@
+"""
+Efficient classical simulation of free fermions using
+their O(2n) (fermionic Gaussian) representation.
+"""
 import numpy as np
 from scipy.linalg import schur
 from itertools import combinations
 
 
 def fock_cov_matrix(n_modes, occ_modes):
+    """
+    Fermionic Gaussian covariance matrix of a Fock
+    basis state.
+    """
 
     if isinstance(occ_modes, (int, np.integer)):
         occ_modes_list = list(range(occ_modes))
@@ -19,7 +27,12 @@ def fock_cov_matrix(n_modes, occ_modes):
 
 
 def gaussian_cov_matrix(ortho_matrix, init_occ_modes):
-
+    """
+    Covariance matrix of a Gaussian state U_Q |init>,
+    where Q is a 2n x 2n orthogonal matrix and the
+    initial state is a Fock state with occupied modes
+    given by `init_occ_modes`
+    """
     n_modes = ortho_matrix.shape[0] // 2
     M = ortho_matrix.T @ fock_cov_matrix(n_modes, init_occ_modes) @ ortho_matrix
 
@@ -27,7 +40,13 @@ def gaussian_cov_matrix(ortho_matrix, init_occ_modes):
 
 
 def one_body_majorana_expectations(cov_matrix):
+    """
+    Expectation values of one-body Majorana operators
 
+    \Gamma_{(p, q)} = -i \gamma_p \gamma_q,
+
+    where p < q, from a covariance matrix.
+    """
     N = cov_matrix.shape[0]
 
     majorana_expectations = {}
@@ -38,7 +57,13 @@ def one_body_majorana_expectations(cov_matrix):
 
 
 def two_body_majorana_expectations(cov_matrix):
+    """
+    Expectation values of two-body Majorana operators
 
+    \Gamma_S = -\gamma_{S[0]} \gamma_{S[1]} \gamma_{S[2]} \gamma_{S[3]}
+
+    from a covariance matrix.
+    """
     N = cov_matrix.shape[0]
 
     majorana_expectations = one_body_majorana_expectations(cov_matrix)
@@ -54,13 +79,10 @@ def two_body_majorana_expectations(cov_matrix):
 
 def pfaffian(A):
     """
-    Computes the Pfaffian of a real antisymmetric 2n x 2n matrix A. Does not check these assumptions.
+    Computes the Pfaffian of a real antisymmetric 2n x 2n matrix A.
+    Does not check these assumptions.
     """
-
     N = A.shape[0]
-
-    # if N % 2 or N != A.shape[1] or not np.allclose(A, -A.T):
-    #     return 0.0
 
     # noinspection PyTupleAssignmentBalance
     T, Z = schur(A, output='real')
@@ -73,7 +95,14 @@ def pfaffian(A):
 
 
 def slater_opdm(unitary, occ_modes):
+    """
+    One-particle density matrix
 
+    opdm[p, q] = <p^ q>
+
+    of a Slater determinant described by the first `occ_modes`
+    columns of an input n x n unitary matrix.
+    """
     if isinstance(occ_modes, (int, np.integer)):
         occ_modes_list = list(range(occ_modes))
     else:
@@ -86,7 +115,15 @@ def slater_opdm(unitary, occ_modes):
 
 
 def slater_tpdm(unitary, occ_modes):
+    """
+    Two-particle density matrix
 
+    tpdm[(p, q), (r, s)] = <p^ q^ s r>
+
+    of a Slater determinant described by the first `occ_modes`
+    columns of an input n x n unitary matrix, flattened along
+    the pairs of indices (p, q) and (r, s)
+    """
     n_orbitals = unitary.shape[0]
 
     opdm = slater_opdm(unitary, occ_modes)
@@ -112,7 +149,10 @@ def slater_tpdm(unitary, occ_modes):
 
 
 def sample_gaussian_state(cov_matrix):
-
+    """
+    Sample a bit string from measuring `cov_matrix` in the
+    Fock basis. Algorithm described in arXiv:1112.2184.
+    """
     n_modes = cov_matrix.shape[0] // 2
     M = cov_matrix.copy()
 
@@ -139,6 +179,7 @@ def sample_gaussian_state(cov_matrix):
     return outcome
 
 
+# Some misc helper functions
 def bit_list_to_int(b):
 
     x = 0
@@ -209,16 +250,18 @@ def embed_passive_into_active_observable(coefficient_matrix: np.ndarray) -> dict
 
 
 if __name__ == '__main__':
+    from scipy.stats import ortho_group, unitary_group
 
-    from scipy.stats import special_ortho_group, unitary_group
-    from time import time
-    import cirq
-    from gaussian_circuit_givens_decomposition import gaussian_givens_decomposition
-    from fermion_shadows_prediction import compute_expectation_values_from_majorana_observables
-    from openfermion.circuits import optimal_givens_decomposition
+    import sys
+    fermion_shadows_dir = '../fermion_shadows'
+    if fermion_shadows_dir not in sys.path:
+        sys.path.append(fermion_shadows_dir)
+    from fermion_shadows.prediction.fermion_shadows_prediction import (
+        compute_expectation_values_from_majorana_observables)
 
-    import matplotlib.pyplot as plt
 
+    """Test the transformation of number-conserving observables written
+    in the ladder operators into a linear combination of Majorana operators"""
     n = 7
     eta = n // 2
 
@@ -232,7 +275,8 @@ if __name__ == '__main__':
 
     hamiltonian = embed_passive_into_active_observable(h)
 
-    energy = compute_expectation_values_from_majorana_observables(majorana_expectations, hamiltonian).real
+    energy = compute_expectation_values_from_majorana_observables(majorana_expectations, hamiltonian)
     energy_check = np.sum(d[:eta])
 
-    print(energy, energy_check)
+    print('Energy from Majorana representation:', energy)
+    print('Energy from ladder representation:', energy_check)

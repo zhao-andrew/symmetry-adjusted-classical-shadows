@@ -1,4 +1,5 @@
-from optimal_matchgate_circuit import optimal_gaussian_circuit, embed_unitary_into_orthogonal_matrix
+from optimal_matchgate_circuit import (optimal_gaussian_circuit,
+                                       embed_unitary_into_orthogonal_matrix)
 
 import numpy as np
 import cirq
@@ -39,6 +40,7 @@ def test_random_adjoint_action(n_qubits: int):
         print('Test failed, error = {}'.format(total_error))
 
     return
+
 
 def test_random_adjoint_action_number_conserving(n_qubits: int):
     unitary_matrix = unitary_group.rvs(n_qubits)

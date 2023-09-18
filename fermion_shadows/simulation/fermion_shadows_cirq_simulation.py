@@ -1,3 +1,7 @@
+"""
+TODO: Add working example(s), improve documentation
+      Also double check the convention of Q -> U_Q
+"""
 import numpy as np
 from itertools import combinations
 
@@ -127,6 +131,7 @@ def permutation_parity(input_list) -> int:
     return parity % 2
 
 
+# Helper functions for managing Cirq circuits
 def optimize_circuit_for_SqrtIswapTargetGateset(circuit, align=True):
 
     optimized_circuit = cirq.optimize_for_target_gateset(circuit, gateset=cirq.SqrtIswapTargetGateset())

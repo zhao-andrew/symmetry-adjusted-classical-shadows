@@ -1,8 +1,10 @@
 from itertools import combinations
 
 import sys
-sys.path.append('../pauli_shadows')
-from pauli_shadows.qubit_rdm_tools import QubitRDM, Pauli_Set
+pauli_shadows_dir = '../pauli_shadows'
+if pauli_shadows_dir not in sys.path:
+    sys.path.append(pauli_shadows_dir)
+from pauli_shadows.qubit_rdm_tools import QubitRDM
 
 
 def mitigate_pauli_expectations_via_magnetization(qubit_rdm: QubitRDM, magnetization) -> QubitRDM:

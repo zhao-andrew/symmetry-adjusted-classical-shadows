@@ -1,10 +1,6 @@
-# -*- coding: utf-8 -*-
 """
-Created on Thu Oct 28 00:09:36 2021
-
-@author: Andrew Zhao
+Helper tools for manipulating qubit RDMs.
 """
-
 import numpy as np
 from openfermion.ops import QubitOperator
 from openfermion.linalg import get_sparse_operator
@@ -268,7 +264,6 @@ if __name__ == '__main__':
     qubits = cirq.LineQubit.range(n_qubits)
     rdm = exact_qubit_rdm(qubits, k, state=state)
     observables, expectations = exact_qubit_rdm(qubits, k, state=state, return_list=True)
-    # expectations = {observables[i] : expectations[i] for i in range(len(observables))}
     expectations = np.array(expectations)
 
     expectations_from_state_vector = []

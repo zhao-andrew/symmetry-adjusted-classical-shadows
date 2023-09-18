@@ -1,3 +1,6 @@
+"""
+Given a fermionic Gaussian state, sample matchgate shadows from it.
+"""
 import numpy as np
 from scipy.special import binom
 from itertools import combinations, product
@@ -6,7 +9,9 @@ from typing import Sequence, Tuple, List, Dict, Union
 from free_fermion_simulator import sample_gaussian_state
 
 
-def shadow_sampling(cov_matrix: np.ndarray, repetitions: int = 1) -> List[List[List[int]]]:
+def shadow_sampling(cov_matrix: np.ndarray,
+                    repetitions: int = 1
+                    ) -> List[List[List[int]]]:
 
     N = cov_matrix.shape[0]
 
@@ -253,32 +258,16 @@ def permutation_parity(input_list: Sequence[int]) -> int:
 
 
 if __name__ == '__main__':
-
+    from time import time
     from scipy.stats import unitary_group, ortho_group
     from free_fermion_simulator import (one_body_majorana_expectations,
                                         two_body_majorana_expectations,
                                         embed_passive_into_active_transformation,
                                         gaussian_cov_matrix)
-    from fermion_shadows_error_mitigation import mitigate_majorana_expectations_via_particle_number_full_system
-    from time import time
 
 
-    def RXX(theta: float, n_qubits: int) -> np.ndarray:
-        N = 2 * n_qubits
-        XX_transformation = np.eye(N)
-        gmat = np.array(
-            [[np.cos(2 * theta), np.sin(2 * theta)],
-             [-np.sin(2 * theta), np.cos(2 * theta)]]
-        )
-        for p in range(N // 2 - 1):
-            givens_rotation = np.eye(N)
-            givens_rotation[2 * p + 1:2 * p + 3, 2 * p + 1:2 * p + 3] = gmat
-            XX_transformation = XX_transformation @ givens_rotation
-        return XX_transformation
-
-    n = 6
+    n = 8
     N = 2 * n
-    # eta = n // 2
     eta = 2
 
     u = unitary_group.rvs(n)
@@ -286,41 +275,20 @@ if __name__ == '__main__':
     M = gaussian_cov_matrix(Q, eta)
     exact_rdm = two_body_majorana_expectations(M)
 
-    R = RXX(np.pi / 20, n)
-    # R = ortho_group.rvs(N)
-    M_noisy = gaussian_cov_matrix(R @ Q, eta)
-    # M_noisy = R.T @ M @ R
+    M = gaussian_cov_matrix(Q, eta)
 
     n_reps = int(1e5)
     ti = time()
-    # noiseless_outcomes = shadow_sampling(M, n_reps)
-    noisy_outcomes = shadow_sampling(M_noisy, n_reps)
+    outcomes = shadow_sampling(M, n_reps)
     tf = time()
     dt = tf - ti
-    print('Time elapsed:', dt)
+    print('Time elapsed to sample:', dt)
 
-    # noiseless_rdm = rdm_shadow_estimates(noiseless_outcomes, k=2)
-    estimated_rdm = rdm_shadow_estimates(noisy_outcomes, k=2)
-    mitigated_rdm = mitigate_majorana_expectations_via_particle_number_full_system(estimated_rdm, n, eta)
+    estimated_rdm = rdm_shadow_estimates(outcomes, k=2)
 
-    noiseless_error = 0.0
-    noisy_error = 0.0
-    mitig_error = 0.0
-    noisy_vs_mitig = 0.0
+    rmse = 0.0
     for op in exact_rdm:
-        # noiseless_error += np.abs(exact_rdm[op] - noiseless_rdm[op])**2
-        noisy_error += np.abs(exact_rdm[op] - estimated_rdm[op])**2
-        mitig_error += np.abs(exact_rdm[op] - mitigated_rdm[op])**2
-        noisy_vs_mitig += np.abs(mitigated_rdm[op] - estimated_rdm[op])**2
-    noiseless_error /= len(exact_rdm)
-    noisy_error /= len(exact_rdm)
-    mitig_error /= len(exact_rdm)
-    noisy_vs_mitig /= len(exact_rdm)
-    noiseless_error **= 0.5
-    noisy_error **= 0.5
-    mitig_error **= 0.5
-    noisy_vs_mitig **= 0.5
-    # print('Noiseless RMSE:', noiseless_error)
-    print('Noisy RMSE:', noisy_error)
-    print('Mitig RMSE:', mitig_error)
-    print('Noisy vs. mitig:', noisy_vs_mitig)
+        rmse += np.abs(exact_rdm[op] - estimated_rdm[op])**2
+    rmse /= len(exact_rdm)
+    rmse **= 0.5
+    print('RMSE (Majorana expectations):', rmse)

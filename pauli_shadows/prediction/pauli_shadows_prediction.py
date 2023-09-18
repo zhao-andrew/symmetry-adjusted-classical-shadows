@@ -1,24 +1,30 @@
 import numpy as np
 
 import sys
-sys.path.append('../pauli_shadows')
-from pauli_shadows.qubit_rdm_tools import QubitRDM, Pauli_Set
+pauli_shadows_dir = '../pauli_shadows'
+if pauli_shadows_dir not in sys.path:
+    sys.path.append(pauli_shadows_dir)
+from pauli_shadows.qubit_rdm_tools import QubitRDM
 
 
-def pauli_shadow_estimates(outcomes, k: int = 2, subsystems=None) -> QubitRDM:
+def pauli_shadow_estimates(outcomes,
+                           k: int = 2,
+                           subsystems=None
+                           ) -> QubitRDM:
     """
-    Info
+    k-local Pauli observable estimation from random Pauli measurements.
+    Average estimates by the standard mean.
+
+    Example:
+    pauli_measurement_basis = ["+X", "-Z", "-Y", "+Y"]
+    bit_string = [1, 0, 1, 1]
+    outcomes[0] = (pauli_measurement_basis, bit_string)
     """
 
     num_samples = len(outcomes)
     n_qubits = len(outcomes[0][1])
     estimated_rdm = QubitRDM(n_qubits, k, subsystems=subsystems)
 
-    """
-    Example:
-    pauli_measurement_basis = ["+X", "-Z", "-Y", "+Y"]
-    bit_string = [1, 0, 1, 1]
-    """
     for pauli_measurement_basis, bit_string in outcomes:
         for subsystem in estimated_rdm.subsystems:
             sign = 1
@@ -39,8 +45,9 @@ def pauli_shadow_estimates(outcomes, k: int = 2, subsystems=None) -> QubitRDM:
     return estimated_rdm
 
 
-def bit_string_subsystem_parity_sign(bit_string, subsystem) -> int:
-
+def bit_string_subsystem_parity_sign(bit_string,
+                                     subsystem
+                                     ) -> int:
     sign = 1
     for i in subsystem:
         if bit_string[i] == 1:
@@ -49,7 +56,11 @@ def bit_string_subsystem_parity_sign(bit_string, subsystem) -> int:
     return sign
 
 
-def pauli_shadow_median_of_means_estimation(outcomes, num_batches: int, k: int = 2) -> QubitRDM:
+def pauli_shadow_median_of_means_estimates(outcomes,
+                                           num_batches: int,
+                                           k: int = 2
+                                           ) -> QubitRDM:
+    n_qubits = len(outcomes[0][1])
 
     num_samples = len(outcomes)
     if num_samples % num_batches != 0:

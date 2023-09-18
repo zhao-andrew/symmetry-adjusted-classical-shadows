@@ -34,15 +34,16 @@ def majorana_shadow_estimates_full_system(outcomes,
                 values are estimates of those Majorana operators
     """
 
-    # Initialize
+    """Initialize"""
     n_modes = len(outcomes[0][1])
     expectations = initialize_majorana_ops_dict(n_modes, k)
     diagonal_ops = diagonal_majoranas(n_modes, k)
 
-    # For each sample, compute and add the shadow estimate
+    """For each sample, compute and add the shadow estimate"""
     for permutation, bit_string in outcomes:
 
-        # Get the Majorana operators which are diagonal in the basis of the Majorana swap unitary defined by permutation
+        """Get the Majorana operators which are diagonal in the
+        basis of the Majorana swap unitary defined by permutation"""
         estimated_ops = majorana_ops_measured_by_permutation(
             permutation, diagonal_ops=diagonal_ops
         )
@@ -50,8 +51,10 @@ def majorana_shadow_estimates_full_system(outcomes,
 
         for diag_op, target_op in estimated_ops:
 
-            # Compute the estimate of the arbitrary Majorana operator estimated_op by evaluating the matrix element
-            # (with sign, as determined by the permutation on Majorana indices) of the associated diagonal operator
+            """Compute the estimate of the Majorana operator `estimated_op`
+            by evaluating the matrix element (with sign, as determined by
+            the permutation on Majorana indices) of the associated diagonal
+            operator"""
             inverse_permutation_on_predicted_op = [inverse_permutation[i] for i in target_op]
             sign = (-1)**permutation_parity(inverse_permutation_on_predicted_op)
 
@@ -59,15 +62,16 @@ def majorana_shadow_estimates_full_system(outcomes,
 
             expectations[target_op] += val
 
-    # Compute the shadow coefficients for the estimates
+    """Compute the shadow coefficients for the estimates"""
     shadow_coefficient = {}
     for j in range(1, k + 1):
         f = binom(2 * n_modes, 2 * j) / binom(n_modes, j)
         shadow_coefficient[j] = f
 
-    # Complete the estimates by multiplying by the appropriate shadow coefficients and then dividing by the total number
-    # of samples to obtain a standard mean estimator (recall that we can rigorously show that median-of-means estimation
-    # is not required for this protocol).
+    """Complete the estimates by multiplying by the appropriate shadow coefficients
+    and then dividing by the total number of samples to obtain a standard mean
+    estimator (recall that we can rigorously show that median-of-means estimation
+    is not required for this protocol)"""
     num_samples = len(outcomes)
     for op in expectations:
         j = len(op) // 2
@@ -76,10 +80,12 @@ def majorana_shadow_estimates_full_system(outcomes,
     return expectations
 
 
+# Should probably simplify this code by bootstrapping from above
 def majorana_shadow_estimates_spin_adapted(outcomes,
                                            up_modes: Union[int, Sequence[int]],
                                            down_modes: Union[int, Sequence[int]],
-                                           k: int = 2) -> dict:
+                                           k: int = 2
+                                           ) -> dict:
     """
     Estimates the expectation values of all Majorana operators
     up to degree 2k which are compatible with the spin sectors
@@ -100,7 +106,7 @@ def majorana_shadow_estimates_spin_adapted(outcomes,
                 values are estimates of those Majorana operators.
     """
 
-    # Initialize
+    """Initialize"""
     n_modes = len(outcomes[0][1])
 
     if isinstance(up_modes, int):
@@ -118,10 +124,11 @@ def majorana_shadow_estimates_spin_adapted(outcomes,
     expectations = initialize_majorana_ops_dict(n_modes, k)
     diagonal_ops = diagonal_majoranas(n_modes, k)
 
-    # For each sample, compute and add the shadow estimate
+    """For each sample, compute and add the shadow estimate"""
     for permutation, bit_string in outcomes:
 
-        # Get the Majorana operators which are diagonal in the basis of the Majorana swap unitary defined by permutation
+        """Get the Majorana operators which are diagonal in the
+        basis of the Majorana swap unitary defined by permutation"""
         estimated_ops = majorana_ops_measured_by_permutation(
             permutation, diagonal_ops=diagonal_ops
         )
@@ -129,8 +136,10 @@ def majorana_shadow_estimates_spin_adapted(outcomes,
 
         for diag_op, target_op in estimated_ops:
 
-            # Compute the estimate of the arbitrary Majorana operator estimated_op by evaluating the matrix element
-            # (with sign, as determined by the permutation on Majorana indices) of the associated diagonal operator
+            """Compute the estimate of the Majorana operator `estimated_op`
+            by evaluating the matrix element (with sign, as determined by
+            the permutation on Majorana indices) of the associated diagonal
+            operator"""
             inverse_permutation_on_predicted_op = [inverse_permutation[i] for i in target_op]
             sign = (-1)**permutation_parity(inverse_permutation_on_predicted_op)
 
@@ -138,8 +147,8 @@ def majorana_shadow_estimates_spin_adapted(outcomes,
 
             expectations[target_op] += val
 
-    # Compute the shadow coefficients for the estimates. Note that the spin-adapted estimators are different from the
-    # full-system estimators.
+    """Compute the shadow coefficients for the estimates. Note that the
+    spin-adapted estimators are different from the full-system estimators."""
     shadow_coefficient = {}
     for i, j in product(range(k + 1), repeat=2):
         if (i, j) == (0, 0):
@@ -148,10 +157,12 @@ def majorana_shadow_estimates_spin_adapted(outcomes,
         f_j = binom(2 * n_down_modes, 2 * j) / binom(n_down_modes, j)
         shadow_coefficient[(i, j)] = f_i * f_j
 
-    # Complete the estimates by multiplying by the appropriate shadow coefficients and then dividing by the total number
-    # of samples to obtain a standard mean estimator (recall that we can rigorously show that median-of-means estimation
-    # is not required for this protocol).
-    # If `outcomes` was not produced by the spin-adapted shadows protocol, then this will produce nonsense estimates!
+    """Complete the estimates by multiplying by the appropriate shadow coefficients
+    and then dividing by the total number of samples to obtain a standard mean
+    estimator (recall that we can rigorously show that median-of-means estimation
+    is not required for this protocol).
+    If `outcomes` was not produced by the spin-adapted shadows protocol, then this
+    will produce nonsense results!"""
     up_majorana_modes = [2 * p + i for p in up_modes for i in range(2)]
     down_majorana_modes = [2 * p + i for p in down_modes for i in range(2)]
     num_samples = len(outcomes)
@@ -316,49 +327,3 @@ def invert_permutation(permutation):
     """
 
     return tuple(np.arange(len(permutation))[np.argsort(permutation)])
-
-
-if __name__ == '__main__':
-
-    from scipy.stats import ortho_group
-    import cirq
-    from optimal_gaussian_circuit import  optimal_gaussian_circuit
-    from fermion_rdm_tools import exact_majorana_rdm
-    from fermion_shadows_cirq_simulation import sample_shadows_full_system, sample_shadows_spin_adapted
-
-    n_qubits = 4
-    k = 2
-
-    up_qubits = list(range(n_qubits // 2))
-    down_qubits = list(range(n_qubits // 2, n_qubits))
-    qubits = cirq.GridQubit.rect(rows=2, cols=n_qubits // 2)
-
-    # state_Q = ortho_group.rvs(2 * n_qubits)
-    state_Q_up = ortho_group.rvs(n_qubits)
-    state_Q_down = ortho_group.rvs(n_qubits)
-    state_Q = np.block([[state_Q_up, np.zeros(state_Q_up.shape)],
-                        [np.zeros(state_Q_down.shape), state_Q_down]])
-    state_circuit = cirq.Circuit(optimal_gaussian_circuit(qubits, state_Q))
-    state = state_circuit.final_state_vector(qubit_order=qubits)
-    exact_rdm = exact_majorana_rdm(qubits, state_vector=state)
-
-    repetitions_exponent = 3
-    repetitions = int(10**repetitions_exponent)
-    # outcomes = sample_shadows_full_system(qubits, state_circuit, repetitions=repetitions)
-    outcomes = sample_shadows_spin_adapted(qubits[:n_qubits // 2], qubits[n_qubits // 2:],
-                                           state_circuit, repetitions=repetitions)
-
-    exact_rdm_vals = np.array(list(exact_rdm.values())).real
-
-    n_samples = np.logspace(repetitions_exponent - 1, repetitions_exponent, num=9, dtype=int)
-    rdm_estimates = []
-    errors = []
-    for T in n_samples:
-        # sampled_rdm = majorana_shadow_estimates_full_system(outcomes[:T], k)
-        sampled_rdm = majorana_shadow_estimates_spin_adapted(outcomes[:T], up_qubits, down_qubits, k)
-        sampled_rdm_vals = np.array(list(sampled_rdm.values()))
-        rdm_estimates.append(sampled_rdm_vals)
-        errors.append(np.linalg.norm(exact_rdm_vals - sampled_rdm_vals))
-    print('Majorana expectations RMSE:', errors)
-    fit = np.polyfit(np.log(n_samples), np.log(errors), 1)
-    print(fit[0])

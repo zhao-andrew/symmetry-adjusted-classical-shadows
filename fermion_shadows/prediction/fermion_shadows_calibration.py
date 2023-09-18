@@ -1,47 +1,17 @@
-import numpy as np
+"""
+NoiseEst for matchgate shadows. Theory follows straightforwardly from that
+described in arXiv:2011.09636, but application to fermions explicitly written
+down in arXiv:[].
+"""
 from scipy.special import binom
-from itertools import combinations
-from sys import argv
-from time import time
-import pickle as pkl
-import json
-
-from simple_noise_models import bit_flip, depolarize_local, depolarize_global, amplitude_damp
-
-from free_fermion_simulator import fock_cov_matrix
-from sample_gaussian_shadows import shadow_sampling
-from fermion_shadows_prediction import (diagonal_majoranas,
-                                        majorana_ops_measured_by_permutation,
-                                        invert_permutation,
-                                        diagonal_majorana_matrix_element,
-                                        permutation_parity)
 
 
-def calibration_samples(n_modes: int, n_samples: int, noise_model, p: float) -> list:
-
-    cov_matrix = fock_cov_matrix(n_modes, 0)
-
-    if isinstance(noise_model, str):
-        if noise_model == 'bf':
-            noise_model = bit_flip
-        elif noise_model == 'dl':
-            noise_model = depolarize_local
-        elif noise_model == 'dg':
-            noise_model = depolarize_global
-        elif noise_model == 'ad':
-            noise_model = amplitude_damp
-        else:
-            raise ValueError('No valid noise model specified.')
-    
-    calibration_outcomes = shadow_sampling(cov_matrix, repetitions=n_samples)
-    for i in range(n_samples):
-        noise_model(calibration_outcomes[i][1], p)
-    
-    return calibration_outcomes
-
-
-def NoiseEstFermi(outcomes: list, k: int = 2) -> dict:
-    
+def NoiseEstFermi(outcomes: list,
+                  k: int = 2
+                  ) -> dict:
+    """
+    Calibration estimator for f_{2k} in the matchgate shadows channel.
+    """
     n_modes = len(outcomes[0][1])
     N = 2 * n_modes
 
@@ -70,14 +40,21 @@ def NoiseEstFermi(outcomes: list, k: int = 2) -> dict:
     return calibration_coeffs
 
 
-def RShadowFermi(majorana_rdm: dict, n_modes, calibration_data, k=2) -> dict:
+def RShadowFermi(majorana_rdm: dict,
+                 n_modes,
+                 calibration_data,
+                 k: int = 2
+                 ) -> dict:
     
     if isinstance(calibration_data, list):
         calibration_coeffs = NoiseEstFermi(calibration_data, k)
     elif isinstance(calibration_data, dict):
         calibration_coeffs = calibration_data
     else:
-        raise TypeError('`calibration_data` must be either list (raw shadow outcomes) or dict (coefficients computes from NoiseEstFermi).')
+        raise TypeError(
+            '`calibration_data` must be either list (raw shadow outcomes)'
+            ' or dict (coefficients computes from NoiseEstFermi).'
+        )
 
     noiseless_shadow_coeff = [binom(n_modes, j) / binom(2 * n_modes, 2 * j) for j in range(k + 1)]
 
@@ -93,51 +70,73 @@ def RShadowFermi(majorana_rdm: dict, n_modes, calibration_data, k=2) -> dict:
     return robust_rdm
 
 
-def combine_rdms(rdm1: dict, num_samples1: int, rdm2: dict, num_samples2: int) -> dict:
-
-    combined_rdm = {}
-    total_num_samples = num_samples1 + num_samples2
-    for op in rdm1:
-        val = rdm1[op] * num_samples1
-        try:
-            val += rdm2[op] * num_samples2
-        except KeyError:
-            pass
-
-        combined_rdm[op] = val / total_num_samples
-
-    return combined_rdm
-
 if __name__ == '__main__':
+    import sys
 
-    n_qubits = 10
-    min_num_samples = int(1e3)
-    max_num_samples = int(5e4)
-    num_points = 7
-    noise_model = 'ad'
-    noise_parameter = 0.
+    fermion_shadows_dir = '../fermion_shadows'
+    if fermion_shadows_dir not in sys.path:
+        sys.path.append(fermion_shadows_dir)
+    from fermion_shadows.simulation.free_fermion_simulator import fock_cov_matrix
+    from fermion_shadows.simulation.sample_gaussian_state_shadows import shadow_sampling
+    from fermion_shadows_prediction import (
+        diagonal_majoranas,
+        majorana_ops_measured_by_permutation,
+        invert_permutation,
+        diagonal_majorana_matrix_element,
+        permutation_parity
+    )
 
-    scratch_dir = '/wheeler/scratch/azhao/mps_shadows/calibration/'
+    pauli_shadows_dir = '../pauli_shadows'
+    if pauli_shadows_dir not in sys.path:
+        sys.path.append(pauli_shadows_dir)
+    from pauli_shadows.simulation.simple_noise_models import (
+        bit_flip,
+        depolarize_local,
+        depolarize_global,
+        amplitude_damp
+    )
 
-    if min_num_samples == max_num_samples:
-        x = [max_num_samples]
-        num_points = 1
-    else:
-        x0 = np.log10(min_num_samples)
-        x1 = np.log10(max_num_samples)
-        x = np.logspace(x0, x1, num=num_points, dtype=int)
-        x[0] = min_num_samples
-        x[-1] = max_num_samples
 
-    t1 = time()
+    def calibration_samples(n_modes: int,
+                            n_samples: int,
+                            noise_model,
+                            p: float
+                            ) -> list:
+        """
+        Function for testing the calibration process. Generates `n_samples` of
+        bit strings from matchgate-shadow sampling |0^n>, affected by `noise_model`.
+        """
 
-    outcomes = calibration_samples(n_qubits, max_num_samples, noise_model, noise_parameter)
-    calib_coeff = NoiseEstFermi(outcomes, 2)
+        cov_matrix = fock_cov_matrix(n_modes, 0)
 
-    dt = time() - t1
-    print('Time elapsed:', dt)
+        if isinstance(noise_model, str):
+            if noise_model == 'bf':
+                noise_model = bit_flip
+            elif noise_model == 'dl':
+                noise_model = depolarize_local
+            elif noise_model == 'dg':
+                noise_model = depolarize_global
+            elif noise_model == 'ad':
+                noise_model = amplitude_damp
+            else:
+                raise ValueError('No valid noise model specified.')
 
-    exact_coeff = {j : binom(n_qubits, j) / binom(2 * n_qubits, 2 * j) for j in range(1, 2 + 1)}
+        calibration_outcomes = shadow_sampling(cov_matrix, repetitions=n_samples)
+        for i in range(n_samples):
+            noise_model(calibration_outcomes[i][1], p)
+
+        return calibration_outcomes
+
+
+    n_qubits = 8
+    num_samples = int(1e4)
+    noise_model = 'dl'
+    noise_parameter = 0.1
+    outcomes = calibration_samples(n_qubits, num_samples, noise_model, noise_parameter)
+    calib_coeff = NoiseEstFermi(outcomes, k=2)
+
+    noiseless_coeff = {j : binom(n_qubits, j) / binom(2 * n_qubits, 2 * j) for j in range(1, 2 + 1)}
 
     print(calib_coeff)
-    print(exact_coeff)
+    print(noiseless_coeff)
+    # They should be different, as noise corrupts the calib_coeff from the noiseless values

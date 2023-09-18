@@ -2,9 +2,6 @@ import numpy as np
 from itertools import product, combinations
 from typing import Sequence, Callable, Union
 
-from matplotlib import use
-import matplotlib.pyplot as plt
-
 from fermion_shadows_prediction import diagonal_majoranas, compute_expectation_values_from_majorana_observables
 
 
@@ -96,9 +93,9 @@ def mitigate_majorana_expectations_via_particle_number_spin_adapted(
 
         if T == 0.0:
             rescaling_factor = 1.0
-#             print(
-#                 'The ({}, {}) conserved quantity is zero, leaving those expectation values untouched.'.format(k, l)
-#             )
+            print(
+                'The ({}, {}) conserved quantity is zero, leaving those expectation values untouched.'.format(k, l)
+            )
 
         else:
             noisy_T = 0.0
@@ -152,17 +149,15 @@ def particle_number_conserved_quantity_for_majoranas(n_modes: int,
 
 
 def bootstrap_error_bars(data: Sequence[dict], observables: Sequence[dict],
-                         mitigation_function: Callable, args: Sequence = (),
+                         estimator: Callable, args: Sequence = (),
                          n_resamples: int = 200,
-                         compute_sample_mean: bool = True,
-                         plot_histogram: bool = False,
-                         observable_labels: Sequence[str] = None) -> Union[np.ndarray, Sequence[np.ndarray]]:
-    """Requires the use of a mitigation strategy. Don't use if not performing error mitigation,
-    just use np.std instead."""
+                         compute_sample_mean: bool = True
+                         ) -> Union[np.ndarray, Sequence[np.ndarray]]:
+    """
+    Bootstrap error bars by resampling shadows, processed by a function
 
-    if plot_histogram and observable_labels is not None:
-        assert len(observables) == len(observable_labels)
-
+    estimator : matchgate sample -> scalar
+    """
     n_samples = len(data)
 
     resampled_observables_means = np.zeros((n_resamples, len(observables)))
@@ -175,7 +170,7 @@ def bootstrap_error_bars(data: Sequence[dict], observables: Sequence[dict],
             for term, val in resampled_data.items():
                 resampled_data_means[term] += val / n_samples
 
-        resampled_data_means_mitigated = mitigation_function(resampled_data_means, *args)
+        resampled_data_means_mitigated = estimator(resampled_data_means, *args)
 
         resampled_observables_means[j] = compute_expectation_values_from_majorana_observables(
             resampled_data_means_mitigated, observables)
@@ -188,31 +183,12 @@ def bootstrap_error_bars(data: Sequence[dict], observables: Sequence[dict],
             for term, val in data_point.items():
                 sample_mean[term] += val / n_samples
         
-        sample_mean_mitigated = mitigation_function(sample_mean, *args)
+        sample_mean_mitigated = estimator(sample_mean, *args)
         
         sample_mean_obs = compute_expectation_values_from_majorana_observables(
             sample_mean_mitigated, observables)
     else:
         sample_mean_obs = None
-
-    if plot_histogram:
-        try:
-            use('Qt5Agg')
-        except ImportError:
-            pass
-        
-        for j in range(len(observables)):
-            plt.figure()
-            plt.hist(resampled_observables_means[:, j])
-            plt.xlabel('Expectation value')
-            if observable_labels is None:
-                title = '{}'.format(tuple(observables[j].keys()))
-            else:
-                title = observable_labels[j]
-            plt.title(title)
-
-            plt.savefig(title + ' bootstrap-hist_B={}.png'.format(n_resamples),
-                        dpi=200, bbox_inches='tight')
     
     if compute_sample_mean:
         return np.array(sample_mean_obs), observable_stdev_from_resamples

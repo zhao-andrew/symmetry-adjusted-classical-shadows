@@ -1,10 +1,10 @@
-# -*- coding: utf-8 -*-
 """
-Created on Tue May 18 18:53:36 2021
+Helper tools for manipulating fermionic RDMs.
 
-@author: Andrew Zhao
+TODO: Define a fermionic RDM class to store expectations,
+      compute arbitrary observables, convert between ladder
+      and Majorana representation, etc.
 """
-
 import numpy as np
 from scipy.special import comb
 

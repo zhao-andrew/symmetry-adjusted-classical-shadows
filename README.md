@@ -1,8 +1,5 @@
 # Classical shadows for fermions (and qubits!)
 
-> [!WARNING]
-> This project is currently being rehauled, and as such may not fully work as intended. See `legacy` if the old codes are still needed.
-
 Open-source codes for performing classical shadows, particularly for quantum simulations of fermions and qubits. Based primarily on the following papers:
 
 * https://arxiv.org/abs/2002.08953 - Introduces the concept of classical shadows and demonstrates the application to local qubit (Pauli) measurements (random single-qubit Clifford gates)

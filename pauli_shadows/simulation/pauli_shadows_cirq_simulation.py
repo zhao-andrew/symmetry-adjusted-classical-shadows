@@ -1,3 +1,6 @@
+"""
+TODO: Add working example(s), improve documentation
+"""
 import numpy as np
 from itertools import product
 from copy import deepcopy
@@ -79,7 +82,11 @@ for i in range(24):
 
 
 # Shadow sampling functions
-def pauli_shadow_sampling(qubits, circuit, simulator=None, repetitions=1):
+def pauli_shadow_sampling(qubits,
+                          circuit,
+                          simulator=None,
+                          repetitions=1
+                          ):
 
     n_qubits = len(qubits)
     qubit_ordering = get_cirq_qubit_order(qubits)
@@ -119,8 +126,12 @@ def pauli_shadow_sampling(qubits, circuit, simulator=None, repetitions=1):
     return outcomes
 
 
-def pauli_shadow_sampling_symmetrized(qubits, circuit, simulator=None, repetitions=1, sqrt_iSWAP=False):
-
+def pauli_shadow_sampling_symmetrized(qubits,
+                                      circuit,
+                                      simulator=None,
+                                      repetitions=1,
+                                      sqrt_iSWAP=False
+                                      ):
     n_qubits = len(qubits)
     qubit_ordering = get_cirq_qubit_order(qubits)
 
@@ -138,40 +149,41 @@ def pauli_shadow_sampling_symmetrized(qubits, circuit, simulator=None, repetitio
     
     outcomes = []
     for j in range(repetitions):
-        # Random local Clifford gates
+        """Random local Clifford gates"""
         clifford_labels = random_local_clifford_labels[j]
         pauli_basis = []
         for i in range(n_qubits):
             pauli_basis.append(CliffordGroup1[clifford_labels[i]][1])
         shadow_circuit = cirq.Circuit(cirq_clifford_gates_from_labels(qubits, clifford_labels))
         
-        # Random permutation circuit constructed out of adjacent SWAP gates
-        # If using QVM, SWAP gates are replaced by two native iSWAP**0.5 gates, which has the same effect for
-        # the purposes of the classical shadows protocol
+        """Random permutation circuit constructed out of adjacent SWAP gates
+        If using QVM, SWAP gates are replaced by two native iSWAP**0.5 gates,
+        which has the same effect for the purposes of classical shadows"""
         permutation = np.random.permutation(n_qubits)
-        shadow_circuit += cirq.Circuit(swap_circuit_from_permutation(qubits, permutation, sqrt_iSWAP=sqrt_iSWAP))
+        shadow_circuit += cirq.Circuit(
+            swap_circuit_from_permutation(qubits, permutation, sqrt_iSWAP=sqrt_iSWAP)
+        )
 
         if qvm_simulator:
             full_circuit = merge_circuits_phxz_layers(circuit, shadow_circuit)
         else:
             full_circuit = circuit + shadow_circuit
-        # print(len(full_circuit))
-        # print(full_circuit.to_text_diagram(transpose=True))
         full_circuit += measurement_circuit
 
         results = simulator.run(full_circuit, repetitions=1)
         bit_string = results.data[qubit_ordering].values
-#         bit_string = [i.item() for i in bit_string[0]]
+        """Rather than store the random permutation, we store the bit string
+        already permuted"""
         bit_string = [bit_string[0][i].item() for i in permutation]
 
-#         outcomes.append([[permutation.tolist(), pauli_basis], bit_string])
         outcomes.append([pauli_basis, bit_string])
 
     return outcomes
 
 
-def cirq_clifford_gates_from_labels(qubits, clifford_labels):
-    
+def cirq_clifford_gates_from_labels(qubits,
+                                    clifford_labels
+                                    ):
     n_qubits = len(qubits)
     
     for i in range(n_qubits):
@@ -182,7 +194,6 @@ def cirq_clifford_gates_from_labels(qubits, clifford_labels):
 
 
 def swap_circuit_from_permutation(qubits, permutation, sqrt_iSWAP=False):
-    
     permutation_decomp = odd_even_sort(permutation)
     for transposition in permutation_decomp:
         i, j = transposition
@@ -196,7 +207,6 @@ def swap_circuit_from_permutation(qubits, permutation, sqrt_iSWAP=False):
 
 
 def odd_even_sort(array):
-    
     N = len(array)
     array_copy = array.copy()
     sorted_bool = False
@@ -222,8 +232,8 @@ def odd_even_sort(array):
     return decomposition
 
 
+# Helper functions for managing Cirq circuits
 def optimize_circuit_for_SqrtIswapTargetGateset(circuit, align=True):
-
     optimized_circuit = cirq.optimize_for_target_gateset(circuit, gateset=cirq.SqrtIswapTargetGateset())
     optimized_circuit = cirq.merge_single_qubit_gates_to_phxz(optimized_circuit)
 
@@ -234,7 +244,6 @@ def optimize_circuit_for_SqrtIswapTargetGateset(circuit, align=True):
 
 
 def merge_circuits_phxz_layers(circuit1, circuit2, align=True):
-
     final_layer_of_circuit1 = cirq.Circuit(circuit1[-1])
     first_layer_of_circuit2 = cirq.Circuit(circuit2[0])
     merged_layer = cirq.merge_single_qubit_gates_to_phxz(final_layer_of_circuit1 + first_layer_of_circuit2)
@@ -250,7 +259,6 @@ def merge_circuits_phxz_layers(circuit1, circuit2, align=True):
 
 
 def get_cirq_qubit_order(qubits):
-
     ordering = []
     for qubit in qubits:
         if isinstance(qubit, cirq.GridQubit):
