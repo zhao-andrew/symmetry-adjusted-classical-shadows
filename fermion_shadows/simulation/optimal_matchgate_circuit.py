@@ -18,7 +18,7 @@ U^\dagger \gamma_i U = \sum_j Q_{ij} \gamma_j.
 If det(Q) = 1 then U preserves parity (corresponding to proper matchgates or FGUs),
 otherwise if det(Q) = -1 then U flips the parity of its input state.
 
-The algorithm for this protocol is described in arXiv:[],
+The algorithm for this protocol is described in arXiv:2310.03071,
 and the base matrix decomposition scheme is built off of arXiv:1603.08788.
 """
 from typing import cast, Iterable, Sequence, Tuple
@@ -36,7 +36,7 @@ def optimal_gaussian_circuit(qubits: Sequence[cirq.Qid],
     """
     Constructs a Cirq circuit which implements the fermionic Gaussian
     unitary transformation given by the 2n x 2n orthogonal matrix, using
-    the optimal design introduced in arXiv:[].
+    the optimal design introduced in arXiv:2310.03071.
 
     Args:
         qubits: Sequence of n qubits to apply the operations over. The qubits
@@ -135,7 +135,7 @@ def majorana_block_decomposition(orthogonal_matrix: np.ndarray
     where each B_i is a 4 x 4 orthogonal transformation, G is a
     2 x 2 Givens rotation, and D is a diagonal matrix of {+1, -1} signs.
     This is bootstrapped from arXiv:1603.08788, replacing 2 x 2 Givens
-    rotations with the 4 x 4 B's.
+    rotations with the 4 x 4 orthogonal matrices B_i.
 
     Args:
         orthogonal_matrix: 2n x 2n orthogonal matrix to decompose
